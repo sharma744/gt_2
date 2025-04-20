@@ -24,7 +24,7 @@ let fn=async()=>{
 fn();
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
-require("/Users/aayushsharma/hostelprojet/mongoserver/routes/route1")(app);
+require("./routes/route1.js")(app);
 app.listen(3000,()=>{
     console.log("server connected succesfully");
 })
