@@ -2,6 +2,7 @@ let db=require("../model/model1")
 let db2=require("../model/model2")
 let controller=require("../controller")
 let fs=require("fs")
+let streamifier=require("streamifier")
 let multer=require("multer")
 let cloudinary=require("cloudinary").v2
  cloudinary.config({ 
@@ -106,39 +107,33 @@ let func=(app)=>{
 
          
     })
-    let uploadFolder="upload/"
-    let name=""
-    const storage = multer.diskStorage({
-        destination: function (req, file, cb) {
-          cb(null, uploadFolder);
-        },
-        filename: function (req, file, cb) {
-            console.log(req.file)
-          const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-          name=file.originalname
-          cb(null,file.originalname);
-        },
-      });
+      const upload = multer({ storage:multer.memoryStorage()});
       
-      const upload = multer({ storage: storage });
-      
-    app.post("/fetchdata",upload.single("file"),controller.fetch,async(req,res,next)=>{
-       let path="mongoserver/upload/"+name;
-       console.log(path)
-        const uploadResult = await cloudinary.uploader
-          .upload(req.file.path,{
-                  public_id: 'pdf',
-              }
-          )
-          .catch((error) => {
-              console.log(error);
-          });
-          console.log(uploadResult);
-               fs.unlinkSync(req.file.path);
+    app.post("/fetchdata",upload.single("file"),async(req,res,next)=>{
+        const streamUpload = (buffer) => {
+            return new Promise((resolve, reject) => {
+                const stream = cloudinary.uploader.upload_stream(
+                    { resource_type: "auto" },
+                    (error, result) => {
+                        if (result) resolve(result);
+                        else reject(error);
+                    }
+                );
+                streamifier.createReadStream(buffer).pipe(stream);
+            });
+        };
+    
+        try {
+            const result = await streamUpload(req.file.buffer);
+            // controller.fetch(await result.url)
+            console.log(result)
+            res.send({ message: "Uploaded!", url: result.secure_url });
+        } catch (err) {
+            res.status(500).send("Upload failed");
+        }
                res.send((req.data));
-    });
-        
-        
-}
+    }
+    )}
+
     
 module.exports=func;
