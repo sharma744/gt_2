@@ -23,8 +23,7 @@ db.on('error',()=>{
 })
 let app=express();
 app.use(express.json())
-app.use(express.json());
-app.use(express.urlencoded({extended:true}));
+app.use(express.urlencoded({extended:true}))
 require("./routes/route1.js")(app);
 app.listen(3000,()=>{
     console.log("server connected succesfully");
