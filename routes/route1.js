@@ -1,8 +1,14 @@
-let db=require("../model/model1");
+let db=require("../model/model1")
 let db2=require("../model/model2")
 let controller=require("../controller")
 let fs=require("fs")
 let multer=require("multer")
+let cloudinary=require("cloudinary").v2
+ cloudinary.config({ 
+    cloud_name: 'dayvf7ugs', 
+    api_key: '682215271415542', 
+    api_secret: 'U6m71klfo3p3UfG3iGEIRW-6Hxo' // Click 'View API Keys' above to copy your API secret
+});
 let path=require("path")
 let func=(app)=>{
     app.post("/postdata",async(req,res)=>{
@@ -117,8 +123,18 @@ let func=(app)=>{
       const upload = multer({ storage: storage });
       
     app.post("/fetchdata",upload.single("file"),controller.fetch,async(req,res,next)=>{
-               console.log(req.data);
-               fs.unlinkSync(`/Users/aayushsharma/hostelprojet/mongoserver/upload/${name}`)
+       let path="mongoserver/upload/"+name;
+       console.log(path)
+        const uploadResult = await cloudinary.uploader
+          .upload(req.file.path,{
+                  public_id: 'pdf',
+              }
+          )
+          .catch((error) => {
+              console.log(error);
+          });
+          console.log(uploadResult);
+               fs.unlinkSync(req.file.path);
                res.send((req.data));
     });
         
